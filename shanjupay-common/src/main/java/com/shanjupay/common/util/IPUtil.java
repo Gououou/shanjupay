@@ -1,5 +1,8 @@
 package com.shanjupay.common.util;
 
+import com.sun.deploy.net.HttpRequest;
+import com.sun.net.httpserver.HttpServer;
+
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

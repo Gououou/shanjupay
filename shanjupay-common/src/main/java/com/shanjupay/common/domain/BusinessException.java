@@ -1,5 +1,4 @@
 
-
 package com.shanjupay.common.domain;
 
 
