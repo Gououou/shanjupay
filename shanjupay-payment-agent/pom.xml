@@ -9,21 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>shanjupay-gateway</artifactId>
+    <artifactId>shanjupay-payment-agent</artifactId>
     <packaging>pom</packaging>
-
     <modules>
-        <module>shanjupay-gateway-service</module>
+        <module>shanjupay-payment-agent-api</module>
+        <module>shanjupay-payment-agent-service</module>
     </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
-            <version>2.1.3.RELEASE</version>
-        </dependency>
-    </dependencies>
-
 
 
 </project>

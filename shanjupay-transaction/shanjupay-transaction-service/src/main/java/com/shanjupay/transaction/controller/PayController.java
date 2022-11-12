@@ -6,20 +6,31 @@ package com.shanjupay.transaction.controller;
  */
 
 import com.alibaba.fastjson.JSON;
+import com.shanjupay.common.domain.BusinessException;
+import com.shanjupay.common.domain.CommonErrorCode;
+import com.shanjupay.common.util.AmountUtil;
 import com.shanjupay.common.util.EncryptUtil;
+import com.shanjupay.common.util.IPUtil;
 import com.shanjupay.common.util.ParseURLPairUtil;
+import com.shanjupay.merchant.api.dto.AppDTO;
 import com.shanjupay.merchant.api.service.AppService;
+import com.shanjupay.paymentagent.api.dto.PaymentResponseDTO;
 import com.shanjupay.transaction.api.dto.PayOrderDTO;
 import com.shanjupay.transaction.api.service.TransactionService;
+import com.shanjupay.transaction.convert.PayOrderConvert;
+import com.shanjupay.transaction.vo.OrderConfirmVO;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 支付相关接口
@@ -30,7 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class PayController {
 
-    @Autowired
+    @Reference
     TransactionService transactionService;
 
     @Reference
@@ -60,12 +71,40 @@ public class PayController {
                 return "forward:/pay-page?"+params;
             case WECHAT:
                 //先获取授权码，申请openid，再到支付确认页面
-//                return transactionService.getWXOAuth2Code(payOrderDTO);
-                return null;
+                //return transactionService.getWXOAuth2Code(payOrderDTO);
+                return "forward:/pay-page-error";
             default:
-
         }
         //不支持客户端类型，转发到错误页面
         return "forward:/pay-page-error";
     }
+
+
+    @ApiOperation("支付宝门店下单付款")
+    @PostMapping("/createAliPayOrder")
+    public void createAlipayOrderForStore(OrderConfirmVO orderConfirmVO, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (StringUtils.isBlank(orderConfirmVO.getAppId())) {
+            throw new BusinessException(CommonErrorCode.E_300003);
+        }
+
+        PayOrderDTO payOrderDTO = PayOrderConvert.INSTANCE.vo2dto(orderConfirmVO);
+        //应用id
+        String appId = payOrderDTO.getAppId();
+        AppDTO app = appService.getAppById(appId);
+        payOrderDTO.setMerchantId(app.getMerchantId());//商户id
+        //将前端输入的元转成分
+        payOrderDTO.setTotalAmount(Integer.parseInt(AmountUtil.changeY2F(orderConfirmVO.getTotalAmount().toString())));
+        //客户端ip
+        payOrderDTO.setClientIp(IPUtil.getIpAddr(request));
+        //保存订单，调用支付渠道代理服务的支付宝下单
+        PaymentResponseDTO<String> paymentResponseDTO = transactionService.submitOrderByAli(payOrderDTO);
+        //支付宝下单接口响应
+        String content = String.valueOf(paymentResponseDTO.getContent());
+        response.setContentType("text/html;charset=UTF-8");
+        response.getWriter().write(content);//直接将完整的表单html输出到页面
+        response.getWriter().flush();
+        response.getWriter().close();
+    }
+
+
 }

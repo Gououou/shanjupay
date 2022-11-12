@@ -1,21 +1,34 @@
 package com.shanjupay.transaction.service;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.shanjupay.common.domain.BusinessException;
 import com.shanjupay.common.domain.CommonErrorCode;
+import com.shanjupay.common.util.AmountUtil;
 import com.shanjupay.common.util.EncryptUtil;
+import com.shanjupay.common.util.PaymentUtil;
 import com.shanjupay.merchant.api.service.AppService;
 import com.shanjupay.merchant.api.service.MerchantService;
+import com.shanjupay.paymentagent.api.conf.AliConfigParam;
+import com.shanjupay.paymentagent.api.dto.AlipayBean;
+import com.shanjupay.paymentagent.api.dto.PaymentResponseDTO;
+import com.shanjupay.paymentagent.api.service.PayChannelAgentService;
+import com.shanjupay.transaction.api.dto.PayChannelParamDTO;
 import com.shanjupay.transaction.api.dto.PayOrderDTO;
 import com.shanjupay.transaction.api.dto.QRCodeDTO;
 import com.shanjupay.transaction.api.service.PayChannelService;
 import com.shanjupay.transaction.api.service.TransactionService;
+import com.shanjupay.transaction.convert.PayOrderConvert;
+import com.shanjupay.transaction.entity.PayOrder;
 import com.shanjupay.transaction.mapper.PayOrderMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * @author 小郭
@@ -45,8 +58,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Autowired
     PayOrderMapper payOrderMapper;
 
-    //@Reference
-    //PayChannelAgentService payChannelAgentService;
+    @Reference
+    PayChannelAgentService payChannelAgentService;
 
     @Autowired
     PayChannelService payChannelService;
@@ -94,5 +107,72 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+
+    /**
+     * 支付宝订单保存
+     *
+     * @param payOrderDTO
+     * @return
+     */
+    @Override
+    public PaymentResponseDTO submitOrderByAli(PayOrderDTO payOrderDTO)throws BusinessException {
+        //保存订单
+        payOrderDTO.setPayChannel("ALIPAY_WAP");
+        payOrderDTO = save(payOrderDTO);
+        //调用支付代理服务请求第三方支付系统
+        return alipayH5(payOrderDTO.getTradeNo());
+    }
+
+    private PayOrderDTO save(PayOrderDTO payOrderDTO) {
+        PayOrder payOrder = PayOrderConvert.INSTANCE.dto2entity(payOrderDTO);
+        //订单号
+        payOrder.setTradeNo(PaymentUtil.genUniquePayOrderNo());//采用雪花片算法
+        payOrder.setCreateTime(LocalDateTime.now());//创建时间
+        payOrder.setExpireTime(LocalDateTime.now().plus(30, ChronoUnit.MINUTES));//过期时间是30分钟后
+        payOrder.setCurrency("CNY");//人民币
+        payOrder.setTradeState("0");//订单状态，0：订单生成
+        payOrderMapper.insert(payOrder);//插入订单
+        return PayOrderConvert.INSTANCE.entity2dto(payOrder);
+    }
+
+    //调用支付渠道代理服务的支付宝下单接口
+    private PaymentResponseDTO alipayH5(String tradeNo){
+        //订单信息，从数据库查询订单
+        PayOrderDTO payOrderDTO = queryPayOrder(tradeNo);
+        //组装alipayBean
+        AlipayBean alipayBean = new AlipayBean();
+        alipayBean.setOutTradeNo(payOrderDTO.getTradeNo());//订单号
+        try {
+            alipayBean.setTotalAmount(AmountUtil.changeF2Y(payOrderDTO.getTotalAmount().toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BusinessException(CommonErrorCode.E_300006);
+        }
+        alipayBean.setSubject(payOrderDTO.getSubject());
+        alipayBean.setBody(payOrderDTO.getBody());
+        alipayBean.setExpireTime("30m");
+
+        //支付渠道配置参数，从数据库查询
+        //String appId,String platformChannel,String payChannel
+        PayChannelParamDTO payChannelParamDTO = payChannelService.queryParamByAppPlatformAndPayChannel(payOrderDTO.getAppId(), "shanju_c2b", "ALIPAY_WAP");
+        String paramJson = payChannelParamDTO.getParam();
+        //支付渠道参数
+        AliConfigParam aliConfigParam = JSON.parseObject(paramJson, AliConfigParam.class);
+        //字符编码
+        aliConfigParam.setCharest("utf-8");
+        //AliConfigParam aliConfigParam, AlipayBean alipayBean
+        PaymentResponseDTO payOrderByAliWAP = payChannelAgentService.createPayOrderByAliWAP(aliConfigParam, alipayBean);
+        return payOrderByAliWAP;
+    }
+
+    /**
+     * 根据订单号查询订单信息
+     * @param tradeNo
+     * @return
+     */
+    private PayOrderDTO queryPayOrder(String tradeNo) {
+        PayOrder payOrder = payOrderMapper.selectOne(new LambdaQueryWrapper<PayOrder>().eq(PayOrder::getTradeNo, tradeNo));
+        return PayOrderConvert.INSTANCE.entity2dto(payOrder);
+    }
 
 }
