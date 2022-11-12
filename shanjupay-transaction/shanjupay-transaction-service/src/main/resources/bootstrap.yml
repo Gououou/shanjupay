@@ -1,0 +1,75 @@
+server:
+  port: 56050 #启动端口 命令行注入
+
+nacos:
+  server:
+    addr: 127.0.0.1:8848
+
+spring:
+  application:
+    name: transaction-service
+  main:
+    # Spring Boot 2.1 需要设定
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos.server.addr}
+        namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
+        cluster-name: DEFAULT
+      config:
+        # 配置中心地址
+        server-addr: ${nacos.server.addr}
+        file-extension: yaml
+        # 2ed00aaa-b760-4171-baa9-83d92e509a41 # 默认开发环境郑州区 命令行注入
+        namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
+        # 聚合支付业务组
+        group: SHANJUPAY_GROUP
+        ext-config:
+          -
+            refresh: true
+            # spring boot http配置
+            data-id: spring-boot-http.yaml
+            # 通用配置组
+            group: COMMON_GROUP
+          -
+            refresh: true
+            # spring boot starter druid配置
+            data-id: spring-boot-starter-druid.yaml
+            # 通用配置组
+            group: COMMON_GROUP
+          -
+            refresh: true
+            # spring boot mybatisplus配置
+            data-id: spring-boot-mybatis-plus.yaml
+            # 通用配置组
+            group: COMMON_GROUP
+          - refresh: true
+            data-id: spring-boot-redis.yaml
+            group: COMMON_GROUP
+
+dubbo:
+  scan:
+    # dubbo 服务扫描基准包
+    base-packages: com.shanjupay
+  protocol:
+    # dubbo 协议
+    name: dubbo
+    port: 20893
+  registry:
+    address: nacos://127.0.0.1:8848
+  application:
+    qos:
+      port: 22250 # dubbo qos端口配置  命令行注入
+  consumer:
+    check: false
+    timeout: 3000
+    retries: -1
+
+logging:
+  config: classpath:log4j2.xml
+
+
+
+
+

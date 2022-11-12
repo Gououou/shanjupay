@@ -1,0 +1,63 @@
+server:
+  #启动端口 命令行注入
+  port: 56020
+  max-http-header-size: 100KB
+
+nacos:
+  server:
+    addr: 127.0.0.1:8848
+
+spring:
+  application:
+    name: uaa-service
+  main:
+    # Spring Boot 2.1 需要设定
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos.server.addr}
+        namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
+        cluster-name: DEFAULT
+      config:
+        # 配置中心地址
+        server-addr: ${nacos.server.addr}
+        file-extension: yaml
+        namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
+        # 聚合支付业务组
+        group: SHANJUPAY_GROUP
+        ext-config:
+          -
+            refresh: true
+            data-id: spring-boot-http.yaml
+            group: COMMON_GROUP
+          -
+            refresh: true
+            data-id: spring-boot-starter-druid.yaml
+            group: COMMON_GROUP
+          -
+            refresh: true
+            data-id: jwt.yaml
+            group: COMMON_GROUP
+
+dubbo:
+  scan:
+    # dubbo 服务扫描基准包
+    base-packages: com.shanjupay
+  protocol:
+    # dubbo 协议
+    name: dubbo
+    port: 20881
+  registry:
+    address: nacos://127.0.0.1:8848
+  application:
+    qos:
+      port: 22220 # dubbo qos端口配置  命令行注入
+  consumer:
+    check: false
+    timeout: 3000
+    retries: -1
+
+logging:
+  config: classpath:log4j2.xml
+    
