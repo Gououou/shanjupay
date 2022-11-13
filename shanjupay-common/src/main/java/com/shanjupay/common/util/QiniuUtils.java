@@ -40,9 +40,9 @@ public class QiniuUtils {
 
         UploadManager uploadManager = new UploadManager(cfg);
         //...生成上传凭证，然后准备上传
-        String accessKey = "rx6Qh-iuIp0Flev9x5X2R-WcVIUOswrho4fxaYji";
-        String secretKey = "Rtv-dmofdmzxC_iR3HdbShvK63vj8XOTsngBWo45";
-        String bucket = "gou-shanjupay";
+        String accessKey = "";
+        String secretKey = "";
+        String bucket = "";
 
         //默认不指定key的情况下，以文件内容的hash值作为文件名
         String key = UUID.randomUUID() + ".png";
@@ -88,8 +88,8 @@ public class QiniuUtils {
 
     //测试
     private static void download_test() {
-        String fileName = "7224b316-0e48-4984-979c-2db22e27d6dc.png";
-        String domainOfBucket = "http://rkx4ry7bw.hn-bkt.clouddn.com";
+        String fileName = "文件名";
+        String domainOfBucket = "空间地址";
         String encodedFileName = null;
         try {
             encodedFileName = URLEncoder.encode(fileName, "utf-8").replace("+", "%20");
