@@ -50,6 +50,9 @@ spring:
           - refresh: true
             data-id: spring-boot-freemarker.yaml
             group: COMMON_GROUP
+          - refresh: true
+            data-id: spring-boot-starter-rocketmq.yaml
+            group: COMMON_GROUP
 
 dubbo:
   scan:

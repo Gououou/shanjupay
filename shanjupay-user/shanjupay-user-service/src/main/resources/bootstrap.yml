@@ -2,8 +2,9 @@ server:
   port: 56030
 
 nacos:
-  server:
-    addr: 127.0.0.1:8848
+  discovery:
+    server-addr: 127.0.0.1:8848
+
 
 spring:
   application:
@@ -13,11 +14,11 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${nacos.server.addr}
+        server-addr: ${nacos.discovery.server-addr}
         namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
         cluster-name: DEFAULT
       config:
-        server-addr: ${nacos.server.addr}
+        server-addr: ${nacos.discovery.server-addr}
         file-extension: yaml
         namespace: 3c567c10-8e4b-4602-9a5c-7454dfae5763
         group: SHANJUPAY_GROUP

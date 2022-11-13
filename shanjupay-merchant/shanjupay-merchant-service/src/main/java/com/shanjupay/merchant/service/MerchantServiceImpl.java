@@ -9,10 +9,11 @@ import com.shanjupay.common.domain.BusinessException;
 import com.shanjupay.common.domain.CommonErrorCode;
 import com.shanjupay.common.domain.PageVO;
 import com.shanjupay.common.util.PhoneUtil;
+
+import com.shanjupay.merchant.api.dto.MerchantDTO;
 import com.shanjupay.merchant.api.dto.StaffDTO;
 import com.shanjupay.merchant.api.dto.StoreDTO;
 import com.shanjupay.merchant.api.service.MerchantService;
-import com.shanjupay.merchant.api.dto.MerchantDTO;
 import com.shanjupay.merchant.convert.MerchantCovert;
 import com.shanjupay.merchant.convert.StaffConvert;
 import com.shanjupay.merchant.convert.StoreConvert;

@@ -30,4 +30,10 @@ public interface TransactionService {
      * @throws BusinessException
      */
     public PaymentResponseDTO submitOrderByAli(PayOrderDTO payOrderDTO) throws BusinessException;
+
+    /**
+     * 更新订单支付状态
+     * @throws BusinessException
+     */
+    void updateOrderTradeNoAndTradeState(String tradeNo, String payChannelTradeNo, String state) throws BusinessException;
 }

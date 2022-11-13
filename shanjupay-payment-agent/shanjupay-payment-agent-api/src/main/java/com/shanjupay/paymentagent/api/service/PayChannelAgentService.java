@@ -19,4 +19,12 @@ public interface PayChannelAgentService {
      * @throws BusinessException
      */
     PaymentResponseDTO createPayOrderByAliWAP(AliConfigParam aliConfigParam, AlipayBean alipayBean) throws BusinessException;
+
+    /**
+     * 支付宝交易状态查询
+     * @param aliConfigParam 支付渠道参数
+     * @param outTradeNo 闪聚平台订单号
+     * @return
+     */
+    PaymentResponseDTO queryPayOrderByAli(AliConfigParam aliConfigParam, String outTradeNo) throws BusinessException;
 }

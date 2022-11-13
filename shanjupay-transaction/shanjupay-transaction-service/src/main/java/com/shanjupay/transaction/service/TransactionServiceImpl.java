@@ -2,6 +2,8 @@ package com.shanjupay.transaction.service;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.shanjupay.common.domain.BusinessException;
 import com.shanjupay.common.domain.CommonErrorCode;
 import com.shanjupay.common.util.AmountUtil;
@@ -175,4 +177,22 @@ public class TransactionServiceImpl implements TransactionService {
         return PayOrderConvert.INSTANCE.entity2dto(payOrder);
     }
 
+    /**
+     * 更新订单支付状态
+     *
+     * @param tradeNo 闪聚平台订单号
+     * @param payChannelTradeNo 支付宝或微信的交易流水号
+     * @param state 订单状态 交易状态支付状态,0‐订单生成,1‐支付中(目前未使用),2‐支付成功,4‐关闭 5‐‐失败
+     */
+    @Override
+    public void updateOrderTradeNoAndTradeState(String tradeNo, String payChannelTradeNo, String state) throws BusinessException {
+        final LambdaUpdateWrapper<PayOrder> lambda = new UpdateWrapper<PayOrder>().lambda();
+        lambda.eq(PayOrder::getTradeNo, tradeNo)
+                .set(PayOrder::getPayChannelTradeNo, payChannelTradeNo)
+                .set(PayOrder::getTradeState, state);
+        if (state != null && "2".equals(state)) {
+            lambda.set(PayOrder::getPaySuccessTime, LocalDateTime.now());
+        }
+        payOrderMapper.update(null, lambda);
+    }
 }
